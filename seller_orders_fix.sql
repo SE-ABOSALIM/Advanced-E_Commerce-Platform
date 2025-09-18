@@ -1,0 +1,8 @@
+CREATE TABLE seller_orders (
+    id SERIAL PRIMARY KEY,
+    seller_id INTEGER REFERENCES sellers(id) ON DELETE CASCADE,
+    order_id INTEGER REFERENCES "order"(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+); 
