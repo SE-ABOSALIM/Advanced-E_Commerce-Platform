@@ -3,8 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'splash_screen.dart';
 import 'Utils/app_config.dart';
 import 'Utils/language_manager.dart';
-import 'Pages/login.dart';
-import 'Pages/seller_login.dart';
+import 'Pages/user/auth/login.dart';
+import 'Pages/seller/login.dart';
 
 void main() async {
   try {
