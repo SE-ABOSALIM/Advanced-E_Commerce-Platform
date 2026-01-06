@@ -12,6 +12,54 @@ It is designed with real-world scenarios in mind, including authentication, auth
 
 The application has been developed over several months and reflects advanced business logic and system complexity, while remaining open for future improvements and extensions.
 
+## Screenshots
+
+## 📱 User Experience
+<table>
+  <tr>
+    <td align="center">
+      <img src="assets/SS/user_homepage.png" width="220" /><br />
+      <b>Home Page</b>
+    </td>
+    <td align="center">
+      <img src="assets/SS/Product_Details.png" width="220" /><br />
+      <b>Product Details</b>
+    </td>
+    <td align="center">
+      <img src="assets/SS/user_cart.png" width="220" /><br />
+      <b>Cart</b>
+    </td>
+    <td align="center">
+      <img src="assets/SS/User_Profile.png" width="220" /><br />
+      <b>User Profile</b>
+    </td>
+  </tr>
+</table>
+&nbsp;  
+
+## 🛒 Seller Panel
+<table>
+  <tr>
+    <td align="center">
+      <img src="assets/SS/Seller_Dashboard.png" width="220" /><br />
+      <b>Dashboard & Statistics</b>
+    </td>
+    <td align="center">
+      <img src="assets/SS/seller_products.png" width="220" /><br />
+      <b>Product Management</b>
+    </td>
+    <td align="center">
+      <img src="assets/SS/Seller_Orders.png" width="220" /><br />
+      <b>Order Management</b>
+    </td>
+    <td align="center">
+      <img src="assets/SS/Seller_Profile.png" width="220" /><br />
+      <b>Seller Profile</b>
+    </td>
+  </tr>
+</table>
+
+
 ---
 
 ## Tech Stack
