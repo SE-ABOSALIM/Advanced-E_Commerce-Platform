@@ -49,7 +49,15 @@ class LanguageManager {
       'Ödeme Yöntemleri': 'Ödeme Yöntemleri',
       'Ayarlar': 'Ayarlar',
       'Çıkış Yap': 'Çıkış Yap',
-      
+      'Kişisel bilgilerinizi yönetin': 'Manage your personal information',
+      'Sipariş geçmişinizi görüntüleyin': 'View your order history',
+      'Beğendiğiniz ürünleri görüntüleyin': 'View your favorite products',
+      'Takip ettiğiniz satıcıları yönetin': 'Manage followed sellers',
+      'Kayıtlı adreslerinizi yönetin': 'Manage saved addresses',
+      'Kart bilgilerinizi yönetin': 'Manage your card details',
+      'Uygulama ayarlarınızı yönetin': 'Manage app settings',
+
+
       // Ürün Detayı
       'Ürün Detayı': 'Ürün Detayı',
       'Ürün Açıklaması': 'Ürün Açıklaması',
@@ -488,7 +496,15 @@ class LanguageManager {
       'Ödeme Yöntemleri': 'Payment Methods',
       'Ayarlar': 'Settings',
       'Çıkış Yap': 'Logout',
-      
+      'Kişisel bilgilerinizi yönetin': 'إدارة معلوماتك الشخصية',
+      'Sipariş geçmişinizi görüntüleyin': 'عرض سجل الطلبات',
+      'Beğendiğiniz ürünleri görüntüleyin': 'عرض المنتجات المفضلة',
+      'Takip ettiğiniz satıcıları yönetin': 'إدارة البائعين الذين تتابعهم',
+      'Kayıtlı adreslerinizi yönetin': 'إدارة العناوين المحفوظة',
+      'Kart bilgilerinizi yönetin': 'إدارة معلومات البطاقة',
+      'Uygulama ayarlarınızı yönetin': 'إدارة إعدادات التطبيق',
+
+
       // Ürün Detayı
       'Ürün Detayı': 'Product Detail',
       'Ürün Açıklaması': 'Product Description',
