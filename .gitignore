@@ -6,6 +6,7 @@
 *.swp
 .buildlog/
 .history
+.desktop.ini
 
 
 
@@ -117,3 +118,37 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# --- Project sensitive/local files ---
+**/config.env
+*.env
+*.env.local
+*.db
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/venv/
+**/uploads/**
+**/backup/**
+
+# JetBrains / IntelliJ / Android Studio
+.idea/
+*.iml
+
+# VS Code / Editor
+.vscode/
+*.code-workspace
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Certificates / keys
+*.keystore
+*.pem
+*.pfx
+*.p12
+*.cer
+*.crt

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'Pages/home.dart';
+import 'Pages/user/home.dart';
 import 'Models/session.dart';
 import 'Models/User.dart';
 import 'Models/seller_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'API/api_service.dart';
+import 'Services/api_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
