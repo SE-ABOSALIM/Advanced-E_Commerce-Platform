@@ -11,6 +11,9 @@ import uuid
 import random
 import string
 from datetime import datetime, timedelta
+import base64
+import hashlib
+import hmac
 from twilio_sms_service import twilio_sms_service
 from sms_language_manager import sms_language_manager
 from email_service import email_service
@@ -31,6 +34,48 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# --- PASSWORD HASHING HELPERS ---
+PBKDF2_ITERATIONS = 100_000
+SALT_BYTES = 16
+
+def hash_password(plain_password: str) -> str:
+    """Return a salted PBKDF2 hash for the given password."""
+    salt = os.urandom(SALT_BYTES)
+    pwd_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        plain_password.encode("utf-8"),
+        salt,
+        PBKDF2_ITERATIONS,
+    )
+    # Store as base64(salt):base64(hash) to keep column as string
+    return f"{base64.b64encode(salt).decode('utf-8')}:{base64.b64encode(pwd_hash).decode('utf-8')}"
+
+def verify_password(plain_password: str, stored_password: str) -> bool:
+    """
+    Check a plaintext password against a stored salted hash.
+    Supports legacy plaintext records for backward compatibility.
+    """
+    if not stored_password:
+        return False
+
+    # Legacy plaintext support
+    if ":" not in stored_password:
+        return hmac.compare_digest(plain_password, stored_password)
+
+    try:
+        salt_b64, hash_b64 = stored_password.split(":", 1)
+        salt = base64.b64decode(salt_b64.encode("utf-8"))
+        stored_hash = base64.b64decode(hash_b64.encode("utf-8"))
+        new_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            plain_password.encode("utf-8"),
+            salt,
+            PBKDF2_ITERATIONS,
+        )
+        return hmac.compare_digest(new_hash, stored_hash)
+    except Exception:
+        return False
 
 # --- PAYMENT TOKENIZATION MOCK (replace with iyzico/iyzipay or similar in prod) ---
 @app.post("/tokenize", response_model=schemas.TokenizeCardResponse)
@@ -84,6 +129,24 @@ def tokenize_card(req: schemas.TokenizeCardRequest, db: Session = Depends(get_db
     api_key = os.getenv('IYZIPAY_API_KEY')
     secret_key = os.getenv('IYZIPAY_SECRET_KEY')
     base_url = os.getenv('IYZIPAY_BASE_URL', 'https://api.iyzipay.com')
+    test_mode = os.getenv('PAYMENT_TEST_MODE', 'true').lower() == 'true'
+    placeholder_keys = any([
+        not api_key,
+        not secret_key,
+        'XXXX' in (api_key or ''),
+        'XXXX' in (secret_key or '')
+    ])
+    
+    # Geliştirme ortamı veya eksik anahtarlar için mock token üret
+    if test_mode or placeholder_keys:
+        mock_token = f"mock_{uuid.uuid4().hex}"
+        return schemas.TokenizeCardResponse(
+            card_token=mock_token,
+            card_brand=brand,
+            last4=digits[-4:],
+            expiry_month=req.expire_month,
+            expiry_year=req.expire_year,
+        )
     
     # URL'den protokolü kaldır
     if base_url.startswith('https://'):
@@ -91,67 +154,66 @@ def tokenize_card(req: schemas.TokenizeCardRequest, db: Session = Depends(get_db
     elif base_url.startswith('http://'):
         base_url = base_url.replace('http://', '')
     
-    if api_key and secret_key:
-        try:
-            import iyzipay
-            user = db.query(models.User).filter(models.User.id == req.user_id).first()
-            user_email = user.email if user else None
-            
-            # Türkçe karakterleri temizle
-            card_holder_name = req.card_holder_name.encode('ascii', 'ignore').decode('ascii')
-            
-            options = {
-                'api_key': api_key,
-                'secret_key': secret_key,
-                'base_url': base_url
-            }
+    try:
+        import iyzipay
+        user = db.query(models.User).filter(models.User.id == req.user_id).first()
+        user_email = user.email if user else None
+        
+        # Türkçe karakterleri temizle
+        card_holder_name = req.card_holder_name.encode('ascii', 'ignore').decode('ascii')
+        
+        options = {
+            'api_key': api_key,
+            'secret_key': secret_key,
+            'base_url': base_url
+        }
 
-            request = {
-                'locale': 'tr',
-                'conversationId': str(uuid.uuid4()),
-                'email': user_email,
-                'externalId': f'user-{req.user_id}',
-                'card': {
-                    'cardAlias': 'AppCard',
-                    'cardHolderName': card_holder_name,
-                    'cardNumber': digits,
-                    'expireMonth': str(req.expire_month).zfill(2),
-                    'expireYear': str(req.expire_year),
-                }
+        request = {
+            'locale': 'tr',
+            'conversationId': str(uuid.uuid4()),
+            'email': user_email,
+            'externalId': f'user-{req.user_id}',
+            'card': {
+                'cardAlias': 'AppCard',
+                'cardHolderName': card_holder_name,
+                'cardNumber': digits,
+                'expireMonth': str(req.expire_month).zfill(2),
+                'expireYear': str(req.expire_year),
             }
+        }
+        
+        card_instance = iyzipay.Card()
+        res = card_instance.create(request, options)
+        
+        import json
+        data = json.loads(res.read().decode('utf-8')) if hasattr(res, 'read') else res
+        
+        if data.get('status') != 'success':
+            raise HTTPException(status_code=400, detail=data.get('errorMessage', 'Kart doğrulanamadı'))
             
-            card_instance = iyzipay.Card()
-            res = card_instance.create(request, options)
-            
-            import json
-            data = json.loads(res.read().decode('utf-8')) if hasattr(res, 'read') else res
-            
-            if data.get('status') != 'success':
-                raise HTTPException(status_code=400, detail=data.get('errorMessage', 'Kart doğrulanamadı'))
-                
-            card_user_key = data.get('cardUserKey')
-            card_token = data.get('cardToken')
-            merged_token = f"{card_user_key}:{card_token}" if card_user_key and card_token else card_token
-            
-            return schemas.TokenizeCardResponse(
-                card_token=merged_token,
-                card_brand=brand,
-                last4=digits[-4:],
-                expiry_month=req.expire_month,
-                expiry_year=req.expire_year,
-            )
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f'Kart doğrulanamadı: {str(e)}')
-
-    # API anahtarları yoksa hata ver
-    raise HTTPException(status_code=500, detail='Ödeme sistemi yapılandırılmamış')
-    return schemas.TokenizeCardResponse(
-        card_token=token,
-        card_brand=brand,
-        last4=digits[-4:],
-        expiry_month=req.expire_month,
-        expiry_year=req.expire_year,
-    )
+        card_user_key = data.get('cardUserKey')
+        card_token = data.get('cardToken')
+        merged_token = f"{card_user_key}:{card_token}" if card_user_key and card_token else card_token
+        
+        return schemas.TokenizeCardResponse(
+            card_token=merged_token,
+            card_brand=brand,
+            last4=digits[-4:],
+            expiry_month=req.expire_month,
+            expiry_year=req.expire_year,
+        )
+    except ImportError:
+        # SDK yoksa da mock token üret, kullanıcıya gerçek ortam için uyarı ver
+        mock_token = f"mock_{uuid.uuid4().hex}"
+        return schemas.TokenizeCardResponse(
+            card_token=mock_token,
+            card_brand=brand,
+            last4=digits[-4:],
+            expiry_month=req.expire_month,
+            expiry_year=req.expire_year,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f'Kart doğrulanamadı: {str(e)}')
 
 # --- CHARGE PAYMENT ---
 @app.post("/charge", response_model=schemas.ChargeResponse)
@@ -822,9 +884,10 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     print(f"DEBUG: Kullanıcı oluşturuluyor...")
     
     try:
+        hashed_password = hash_password(user.password)
         db_user = models.User(
             name_surname=user.name_surname,
-            password=user.password,  # Gerçek uygulamada hash'lenmeli
+            password=hashed_password,
             email=user.email,
             phone_number=formatted_phone,  # Formatlanmış telefon numarasını kullan
             phone_verified="verified",
@@ -1001,7 +1064,10 @@ def update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(ge
     # Diğer alanları güncelle
     for key, value in user.dict().items():
         if value is not None:
-            setattr(db_user, key, value)
+            if key == "password":
+                setattr(db_user, key, hash_password(value))
+            else:
+                setattr(db_user, key, value)
     
     db_user.updated_at = datetime.now()
     db.commit()
@@ -1584,10 +1650,11 @@ async def create_seller(
         
         # Seller oluştur
         from datetime import datetime
+        hashed_password = hash_password(password)
         db_seller = models.Seller(
             name=name,
             email=email,
-            password=password,  # Gerçek uygulamada hash'lenmeli
+            password=hashed_password,
             phone=phone,
             phone_verified="verified",
             email_verified="pending",
@@ -1634,12 +1701,9 @@ async def create_seller(
 @app.post("/sellers/login", response_model=schemas.SellerBase)
 def login_seller(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     try:
-        seller = db.query(models.Seller).filter(
-            models.Seller.email == email,
-            models.Seller.password == password
-        ).first()
+        seller = db.query(models.Seller).filter(models.Seller.email == email).first()
         
-        if not seller:
+        if not seller or not verify_password(password, seller.password):
             raise HTTPException(status_code=401, detail="E-posta veya şifre hatalı!")
         
         return schemas.SellerBase(
@@ -2785,12 +2849,9 @@ def verify_seller_email(verification: schemas.EmailVerificationSellerVerify, db:
 @app.post("/users/login", response_model=schemas.UserBase)
 def login_user(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     try:
-        user = db.query(models.User).filter(
-            models.User.email == email,
-            models.User.password == password
-        ).first()
+        user = db.query(models.User).filter(models.User.email == email).first()
         
-        if not user:
+        if not user or not verify_password(password, user.password):
             raise HTTPException(status_code=401, detail="E-posta veya şifre hatalı!")
         
         return schemas.UserBase(
