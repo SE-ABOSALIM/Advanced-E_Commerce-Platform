@@ -38,7 +38,7 @@ analysis_benchmark.json
 .flutter-plugins
 .flutter-plugins-dependencies
 **/generated_plugin_registrant.dart
-.packages
+.package_config.json
 .pub-preload-cache/
 .pub/
 build/
@@ -136,6 +136,7 @@ app.*.symbols
 # JetBrains / IntelliJ / Android Studio
 .idea/
 *.iml
+*.metadata
 
 # VS Code / Editor
 .vscode/
