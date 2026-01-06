@@ -5,7 +5,7 @@
 *.swp
 .buildlog/
 .history
-.desktop.ini
+*.ini
 
 
 
