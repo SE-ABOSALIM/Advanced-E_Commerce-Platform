@@ -1,7 +1,7 @@
 # Full-Stack E-Commerce Platform
 
 A production-ready, full-stack e-commerce application developed with a focus on scalability, security, and maintainability.  
-The project includes a complete buyer–seller ecosystem, robust backend architecture, and a multilingual mobile client.
+The project includes a complete buyer–seller ecosystem, a robust backend architecture, and a multilingual mobile client.
 
 ---
 
@@ -11,6 +11,8 @@ This project is a fully functional e-commerce platform where users and sellers i
 It is designed with real-world scenarios in mind, including authentication, authorization, validation, error handling, and internationalization.
 
 The application has been developed over several months and reflects advanced business logic and system complexity, while remaining open for future improvements and extensions.
+
+---
 
 ## Screenshots
 
@@ -35,7 +37,7 @@ The application has been developed over several months and reflects advanced bus
     </td>
   </tr>
 </table>
-&nbsp;  
+&nbsp;
 
 ## 🛒 Seller Panel
 <table>
@@ -59,7 +61,6 @@ The application has been developed over several months and reflects advanced bus
   </tr>
 </table>
 
-
 ---
 
 ## Tech Stack
@@ -71,11 +72,10 @@ The application has been developed over several months and reflects advanced bus
 - Multilingual UI support (TR / EN / AR)
 
 ### Backend
-- **Django & Django REST Framework** (core backend, authentication, business logic)
-- **FastAPI** (high-performance and async services)
+- **FastAPI** (core backend and RESTful API)
+- Pydantic-based request and response validation
 - RESTful API design
 - Email and password-based authentication with secure password hashing and role-based access control
-
 
 ### Database
 - **PostgreSQL**
@@ -84,7 +84,7 @@ The application has been developed over several months and reflects advanced bus
 - Migrations and indexing
 
 ### Third-Party Services
-- **Twilio** (phone number verification)
+- **Twilio** (phone number verification via SMS)
 - **Google Mail (SMTP)** for email verification
 
 ---
@@ -127,6 +127,8 @@ Language switching is available within the application, ensuring a localized use
 - Viewing product reviews and ratings
 - Order status updates
 - Sales statistics and order insights
+
+---
 
 ## Error Handling
 
